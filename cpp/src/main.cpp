@@ -23,9 +23,28 @@ int main(int, char**){
     addrinfo hints{};
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    int ret = getaddrinfo("www.google.com", "80", &hints, &result);
+    int ret = getaddrinfo("www.google.com", "443", &hints, &result);
     if (ret < 0) {
         throw std::runtime_error(gai_strerror(ret));
+    }
+
+    for (p = result; p != nullptr; p = p->ai_next) {
+        ret = connect(sock.sock_, p->ai_addr, p->ai_addrlen);
+        if (ret < 0) {
+            continue;
+        }
+
+        char addr[INET6_ADDRSTRLEN]{};
+        const char* r = inet_ntop(p->ai_family, p->ai_addr->sa_data, addr, sizeof(addr));
+        if (!r) {
+            std::cerr << "Could not convert address to presentation format\n";
+        }
+        std::cout << "Addr is: " << addr << std::endl;
+        break;
+    }
+    freeaddrinfo(result);
+    if (ret < 0) { 
+        throw std::runtime_error("Could not connect to any addr");
     }
 
     SslCtx ssl_ctx = SSL_CTX_new(TLS_client_method());
@@ -40,25 +59,6 @@ int main(int, char**){
     ret = SSL_set_fd(ssl.ssl_, sock.sock_);
     if (!ret) {
         throw std::runtime_error("Could not set FD for SSL");
-    }
-
-
-    for (p = result; p != nullptr; p = p->ai_next) {
-        ret = connect(sock.sock_, p->ai_addr, p->ai_addrlen);
-        if (ret < 0) {
-            continue;
-        }
-
-        char addr[INET6_ADDRSTRLEN]{};
-        const char* r = inet_ntop(p->ai_family, p->ai_addr->sa_data, addr, sizeof(addr));
-        if (!r) {
-            std::cerr << "Could not convert address to presentation format\n";
-        }
-        break;
-    }
-    freeaddrinfo(result);
-    if (ret < 0) { 
-        throw std::runtime_error("Could not connect to any addr");
     }
 
     ret = SSL_connect(ssl.ssl_);

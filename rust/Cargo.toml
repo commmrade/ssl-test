@@ -1,0 +1,8 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+openssl = "0.10.75"
+trust-dns-resolver = "0.23.2"

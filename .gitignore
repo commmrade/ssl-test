@@ -1,2 +1,3 @@
-build
-.cache
+cpp/build
+cpp/.cache
+*.vscode
